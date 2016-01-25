@@ -1,16 +1,13 @@
-// #include <iostream>
-// // #include <stdio.h>
-// #include <random>
-// #include <iostream>
+// stuff for metropolis
 #include <chrono>
 #include <random>
 #include <functional>
 #include <array>
 #include <math.h>
 #include <cmath>
-// #include <fstream>
 #include <time.h>
 
+// file I/O stuff
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -41,6 +38,7 @@
 //uses brace initialization, so must use the C++11 compiler. 
 // call as g++ -std=c++11 file-name.pp -o file-handle
 
+// functions for creating matrices
 int **new_MatrixI(int row, int col){
 		int ** matrix=new int *[row];
 		int i,j;
@@ -57,6 +55,8 @@ double **new_MatrixD(int row, int col){
 	}
 	return (matrix);
 }
+
+// functions for deleting matrices (unused, I believe -G)
 void del_MatrixI(int **mat, int row){
 	int i;
 	for(i=0; i<row; i++){
@@ -72,6 +72,7 @@ void del_MatrixD(double **mat, int row){
 	delete[] mat;
 }
 
+// functions for copying matrices
 void set_eq_I(int* lhs, int* rhs){
 	for (int i=0; i<DIM; i++){
 		lhs[i]=rhs[i];
@@ -83,32 +84,6 @@ void set_eq_D(double* lhs, double* rhs){
 	}
 }
 
-void writeData(double ** data, int row, int col){
-	std::ofstream dataFile;
-	dataFile.open("trajectories2D.csv");
-	for (int i=0; i<row; i++){
-		for (int j=0; j<col-1; j++){
-			dataFile<<data[i][j]<<",";
-		}
-		dataFile<<data[i][col-1]<<"\n";
-	}
-	dataFile.close();
-}
-
-void printImage(int** image){
-	for (int i=0; i<IMG_LENGTH; i++){
-		for (int j=0; j<IMG_WIDTH; j++){
-			if (image[i][j]==1){
-				printf(" %d ", image[i][j]);	
-			}else{
-				printf("%d ", image[i][j]);
-			}
-			
-		}
-		printf("\n");
-	}
-	printf("\n");
-}
 
 int mod(int n, int m){
 	if (n>=0) return n%m;
@@ -153,6 +128,7 @@ void Sample::draw_kern(int* x, int* y){
 	//with zero mean and sigma*I correlation matrix. This is comp.
 	//bottleneck
 }
+
 int Sample::draw_bern(double param){
 	std::discrete_distribution<int> B {param, 1-param};
 	return B(mt);
@@ -364,6 +340,7 @@ void Metropolis::metSamp(int** obs, int** res){
 	// res=res;
 }
 
+// Used for data I/O
 class CSVRow
 {
     public:
@@ -393,34 +370,14 @@ class CSVRow
         std::vector<std::string>    m_data;
 };
 
+// Used for data I/O
 std::istream& operator>>(std::istream& str,CSVRow& data)
 {
     data.readNextRow(str);
     return str;
 }   
 
-void writeDataInt(int ** data, int row, int col){
-	std::ofstream dataFile;
-	dataFile.open("lenaRestored.csv");
-	for (int i=0; i<row; i++){
-		for (int j=0; j<col-1; j++){
-			if(data[i][j]==1){
-				dataFile<<255<<",";
-			}
-			else{
-				dataFile<<0<<",";
-			}
-		}
-		if(data[i][col-1]==1){
-			dataFile<<255<<"\n";
-		}
-		else{
-			dataFile<<0<<"\n";
-		}
-	}
-	dataFile.close();
-}
-
+// Read data from CSV into matrix
 void readDataInt(int ** data, int numrows, int numcols){
 	std::ifstream file("foo2.csv");
 	CSVRow row;
@@ -441,52 +398,46 @@ void readDataInt(int ** data, int numrows, int numcols){
     }
 }
 
-int main(){
-
-	// double *init_vec=new double[DIM];
-	// init_vec[0]=XSTART; init_vec[1]=YSTART;
-
-	// int** chain=new_MatrixI(ITERS,DIM);
-	// double **dataChain=new_MatrixD(ITERS, DIM);
-	// double **fullData=new_MatrixD(ITERS, DIM*CYCLES);
-	// double *result=new double[DIM];
-	// int ***superChain=new int**[CYCLES];
-	// double ***superDataChain=new double**[CYCLES];
-
-	int** image=new_MatrixI(IMG_WIDTH,IMG_LENGTH);
-	int** result=new_MatrixI(IMG_WIDTH,IMG_LENGTH);
-	readDataInt(image, IMG_WIDTH,IMG_LENGTH);
-
-	Metropolis met;
-	Ising model;
-
-	// int testNHBD_I[NHBD_SIZE],testNHBD_J[NHBD_SIZE];;
-
-	// model.nhbd(0, 0, testNHBD_I, testNHBD_J);
-
-	// printf("The i-nhbd of (1,1) nhbds={%d,%d,%d,%d}\n", testNHBD_I[0], testNHBD_I[1], testNHBD_I[2], testNHBD_I[3]);
-	// printf("The j-nhbd of (1,1) nhbds={%d,%d,%d,%d}\n", testNHBD_J[0], testNHBD_J[1], testNHBD_J[2], testNHBD_J[3]);
-
-	for (int i=0; i<CYCLES; i++){
-		// superChain[i]=new_MatrixI(ITERS,DIM);
-		// superDataChain[i]=new_MatrixD(ITERS,DIM);
-		// met.set_initVal(init_vec);
-
-		// int t=1;
-		// printf("%d\n", t*=-1 );
-		// printf("%d\n", t*=-1 );
-
-		met.metSamp(image, result);
-
-		// for(int k=0; k<ITERS; k++){
-		// 	met.index_to_double(superChain[i][k], superDataChain[i][k]);
-		// 	for (int m=0; m<DIM; m++){
-		// 		fullData[k][m+i*DIM]=superDataChain[i][k][m];
-		// 	}	
-		// }
+// write matrix into a CSV
+void writeDataInt(int ** data, int row, int col){
+	std::ofstream dataFile;
+	dataFile.open("restoration.csv");
+	for (int i=0; i<row; i++){
+		for (int j=0; j<col-1; j++){
+			if(data[i][j]==1){
+				dataFile<<255<<",";
+			}
+			else{
+				dataFile<<0<<",";
+			}
+		}
+		if(data[i][col-1]==1){
+			dataFile<<255<<"\n";
+		}
+		else{
+			dataFile<<0<<"\n";
+		}
 	}
-	// writeData(fullData, ITERS, DIM*CYCLES);
-	writeDataInt(image, IMG_WIDTH,IMG_LENGTH);
+	dataFile.close();
+}
+
+
+int main(){
+	// Declare variables
+	int** observation=new_MatrixI(IMG_WIDTH, IMG_LENGTH);
+	int** result=new_MatrixI(IMG_WIDTH, IMG_LENGTH);
+
+	// load csv data into observation
+	readDataInt(observation, IMG_WIDTH, IMG_LENGTH);
+	// initialize result = observation
+	set_eq_I(result, observation);
+
+	// instantiate metropolis sampler
+	Metropolis met;
+	// run metropolis sampler
+	met.metSamp(observation, result);
+
+	// write result to csv
+	writeDataInt(result, IMG_WIDTH,IMG_LENGTH);
 	return 0;
 }
-//http://stackoverflow.com/questions/196017/unique-non-repeating-random-numbers-in-o1#196065
