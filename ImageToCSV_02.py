@@ -8,7 +8,7 @@ data = np.zeros((img.size[0],img.size[1]))
 for i in range(img.size[0]):    # for every pixel:
     for j in range(img.size[1]):
         data[i,j] = int(pixels[i, j])
-np.savetxt("foo.csv", data, fmt='%i', delimiter=",")
+np.savetxt("cleanData.csv", data, fmt='%i', delimiter=",")
 print(img.size[0])
 print(img.size[1])
 

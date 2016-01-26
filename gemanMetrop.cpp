@@ -17,14 +17,17 @@
 #include <string>
 
 // hyperparameters
-#define ITERS 4
+#define ITERS 200
 #define SIGMA 20
+#define TWOSIGMASQUARED 800
 #define TEMPCOEFF 1
+#define ALPHA 25
+#define LAMBDA 4
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
-#define IMG_WIDTH 10
-#define IMG_LENGTH 10
+#define IMG_WIDTH 512
+#define IMG_LENGTH 512
 
 
 //uses brace initialization, so must use the C++11 compiler. 
@@ -91,7 +94,14 @@ int Sample::draw_bern(double param){
 }
 
 double localEnergy(int** observation, int** result, int val, int i, int j){
-	return 0.5;
+	double energy;
+	energy = (val - observation[i][j])*(val - observation[i][j]);
+	energy = energy / TWOSIGMASQUARED;
+	energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	return energy;
 }
 
 void metSamp(int** observation, int** result){
@@ -186,7 +196,7 @@ std::istream& operator>>(std::istream& str,CSVRow& data)
 
 // Read data from CSV into matrix
 void readDataInt(int ** data, int numrows, int numcols){
-	std::ifstream file("gemanIn.csv");
+	std::ifstream file("noisyData.csv");
 	CSVRow row;
 	int i=0;
 	while(file >> row && i<numrows)
@@ -202,7 +212,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("gemanOut.csv");
+	dataFile.open("restoredData.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
