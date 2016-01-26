@@ -1,4 +1,5 @@
 // stuff for metropolis
+#include <algorithm>
 #include <chrono>
 #include <random>
 #include <functional>
@@ -16,14 +17,14 @@
 #include <string>
 
 // hyperparameters
-#define ITERS 10
+#define ITERS 4
 #define SIGMA 20
-#define TEMPCOEFF 1/10
+#define TEMPCOEFF 1
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
-#define IMG_WIDTH 5
-#define IMG_LENGTH 5
+#define IMG_WIDTH 10
+#define IMG_LENGTH 10
 
 
 //uses brace initialization, so must use the C++11 compiler. 
@@ -63,18 +64,6 @@ void del_MatrixD(double **mat, int row){
 	delete[] mat;
 }
 
-// functions for copying matrices
-void set_eq_I(int* lhs, int* rhs){
-	for (int i=0; i<DIM; i++){
-		lhs[i]=rhs[i];
-	}
-}
-void set_eq_D(double* lhs, double* rhs){
-	for (int i=0; i<DIM; i++){
-		lhs[i]=rhs[i];
-	}
-}
-
 // Does sampling from distributions
 class Sample
 {
@@ -101,16 +90,21 @@ int Sample::draw_bern(double param){
 	return B(mt);
 }
 
+double localEnergy(int** observation, int** result, int val, int i, int j){
+	return 0.5;
+}
+
 void metSamp(int** observation, int** result){
 	// define variables
-	int i, j, k;
-	int val;
+	int i, j, k, val;
+	double proposedEnergy, currentEnergy;
 
 	// vector for randomly visitng sites
 	std::vector<int> indices;
 	for (k=0; k<IMG_WIDTH*IMG_LENGTH; k++){
 		indices.push_back(k);
 	}
+	// machinery for permuting vector
 	std::random_device random_dev;
 	std::mt19937       generator(random_dev());
 
@@ -121,11 +115,18 @@ void metSamp(int** observation, int** result){
 	for(int sweep=2; sweep<ITERS; sweep++){
 		// permute indices
 		std::shuffle(indices.begin(), indices.end(), generator);
+		// perform sweep
 		for(int k=0; k<IMG_WIDTH*IMG_LENGTH; k++){
 			// pick next site
-			j = indices[k] % 512;
-			i = (k-j) / 512
+			j = indices[k] % IMG_LENGTH;
+			i = (indices[k] - j) / IMG_WIDTH;
 
+			// pick a proposal
+			val = result[i][j] + (int) sampler.draw_gauss();
+			if(val<0)
+				val = 0;
+			else if(val>255)
+				val = 255;
 
 			// calculate energies
 			currentEnergy = localEnergy(observation, result, result[i][j], i, j);
@@ -144,9 +145,7 @@ void metSamp(int** observation, int** result){
 	}
 }
 
-double localEnergy(int** observation, int** result, int val, int i, int j){
-	return 0.5;
-}
+
 
 // Used for data I/O
 class CSVRow
@@ -221,7 +220,11 @@ int main(){
 	// load csv data into observation
 	readDataInt(observation, IMG_WIDTH, IMG_LENGTH);
 	// initialize result = observation
-	set_eq_I(result, observation);
+	for (int i=0; i<IMG_WIDTH; i++){
+		for (int j=0; j<IMG_LENGTH; j++){
+			result[i][j] = observation[i][j];
+		}
+	}
 
 	// run metropolis sampler
 	metSamp(observation, result);
