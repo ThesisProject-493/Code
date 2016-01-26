@@ -121,14 +121,7 @@ void metSamp(int** observation, int** result){
 	// define variables
 	int i;
 	int j;
-
-	// generate energy matrix
-	double** energy=new_MatrixD(IMG_WIDTH, IMG_LENGTH);
-	for (i=0; i<IMG_WIDTH; i++){
-		for (j=0; j<IMG_LENGTH; j++){
-			energy[i][j] = localEnergy(observation, result, i, j)
-		}
-	}
+	int val;
 
 	// instantiate sampler
 	Sample sampler;
@@ -150,22 +143,23 @@ void metSamp(int** observation, int** result){
 			// pick next site
 
 
-			// calculate proposed energy
-			proposedEnergy = localEnergy(observation, result, i, j);
+			// calculate energies
+			currentEnergy = localEnergy(observation, result, result[i][j], i, j);
+			proposedEnergy = localEnergy(observation, result, val, i, j);
 
-			if (proposedEnergy<=energy[i][j]){
-				// update energy
+			if (proposedEnergy<=currentEnergy){
 				// keep new pixel value
+				// update energy for whole clique
 			}
-			else if(sampler.draw_bern(exp(-log(sweep)*TEMPCOEFF*(proposedEnergy-energy[i][j])))){
-				// update energy
+			else if(sampler.draw_bern(exp(-log(sweep)*TEMPCOEFF*(proposedEnergy-currentEnergy)))){
 				// keep new pixel value
+				// update energy for whole clique
 			}
 		}
 	}
 }
 
-double localEnergy(int** observation, int** result, int i, int j){
+double localEnergy(int** observation, int** result, int val, int i, int j){
 	return 0.5;
 }
 
