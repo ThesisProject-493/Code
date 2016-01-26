@@ -17,12 +17,12 @@
 #include <string>
 
 // hyperparameters
-#define ITERS 200
+#define ITERS 20
 #define SIGMA 20
 #define TWOSIGMASQUARED 800
 #define TEMPCOEFF 1
-#define ALPHA 25
-#define LAMBDA 4
+#define ALPHA 20
+#define LAMBDA 20
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
@@ -97,10 +97,16 @@ double localEnergy(int** observation, int** result, int val, int i, int j){
 	double energy;
 	energy = (val - observation[i][j])*(val - observation[i][j]);
 	energy = energy / TWOSIGMASQUARED;
-	energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
-	energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
-	energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
-	energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	// squared distance
+	// energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	// energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
+	// energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
+	// energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	// absolute distance
+	energy = energy + std::min(LAMBDA*abs(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*abs(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*abs(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
+	energy = energy + std::min(LAMBDA*abs(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
 	return energy;
 }
 
