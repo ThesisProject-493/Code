@@ -22,8 +22,8 @@
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
-#define IMG_WIDTH 512
-#define IMG_LENGTH 512
+#define IMG_WIDTH 5
+#define IMG_LENGTH 5
 
 
 //uses brace initialization, so must use the C++11 compiler. 
@@ -84,7 +84,6 @@ public:
 	G(0,SIGMA)
 	{}
 	int draw_bern(double);
-	void randPerm(int*, int);
 	double draw_gauss();
 private:
   	std::mt19937 mt;
@@ -102,58 +101,44 @@ int Sample::draw_bern(double param){
 	return B(mt);
 }
 
-// permutes a vector
-void Sample::randPerm(int* vec, int len){
-	// int index=len-1;
-	srand(time(NULL));
-
-	int temp, ind;
-
-	for (int i=0; i<len; i++){
-		ind=std::rand()%(len-i);
-		temp=vec[len-i-1];
-		vec[len-i-1]=vec[ind];
-		vec[ind]=temp;
-	}
-}
-
 void metSamp(int** observation, int** result){
 	// define variables
-	int i;
-	int j;
+	int i, j, k;
 	int val;
+
+	// vector for randomly visitng sites
+	std::vector<int> indices;
+	for (k=0; k<IMG_WIDTH*IMG_LENGTH; k++){
+		indices.push_back(k);
+	}
+	std::random_device random_dev;
+	std::mt19937       generator(random_dev());
 
 	// instantiate sampler
 	Sample sampler;
 
-	// randomization stuff (might need re-jigging)
-	// int* s_I=new int[IMG_WIDTH];
-	// int* s_J=new int[IMG_LENGTH];
-	// for (int i=0; i<IMG_WIDTH; i++){
-	// 	s_I[i]=i;
-	// }
-	// for (int i=0; i<IMG_LENGTH; i++){
-	// 	s_J[i]=i;
-	// }
-	// sampler.randPerm(s_I, IMG_WIDTH);
-	// sampler.randPerm(s_J, IMG_LENGTH);
 
 	for(int sweep=2; sweep<ITERS; sweep++){
+		// permute indices
+		std::shuffle(indices.begin(), indices.end(), generator);
 		for(int k=0; k<IMG_WIDTH*IMG_LENGTH; k++){
 			// pick next site
+			j = indices[k] % 512;
+			i = (k-j) / 512
 
 
 			// calculate energies
 			currentEnergy = localEnergy(observation, result, result[i][j], i, j);
 			proposedEnergy = localEnergy(observation, result, val, i, j);
 
+			// acceptance stage (after denial, anger, bargaining, and depression)
 			if (proposedEnergy<=currentEnergy){
 				// keep new pixel value
-				// update energy for whole clique
+				result[i][j] = val;
 			}
 			else if(sampler.draw_bern(exp(-log(sweep)*TEMPCOEFF*(proposedEnergy-currentEnergy)))){
 				// keep new pixel value
-				// update energy for whole clique
+				result[i][j] = val;
 			}
 		}
 	}
@@ -202,7 +187,7 @@ std::istream& operator>>(std::istream& str,CSVRow& data)
 
 // Read data from CSV into matrix
 void readDataInt(int ** data, int numrows, int numcols){
-	std::ifstream file("foo.csv");
+	std::ifstream file("gemanIn.csv");
 	CSVRow row;
 	int i=0;
 	while(file >> row && i<numrows)
@@ -218,7 +203,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("gaussianObs.csv");
+	dataFile.open("gemanOut.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
