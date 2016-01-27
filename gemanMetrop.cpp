@@ -17,12 +17,12 @@
 #include <string>
 
 // hyperparameters
-#define ITERS 20
-#define SIGMA 20
-#define TWOSIGMASQUARED 800
+#define ITERS 1000
+#define SIGMA 40
+#define TWOSIGMASQUARED 1600
 #define TEMPCOEFF 1
-#define ALPHA 20
-#define LAMBDA 20
+#define ALPHA 1.0
+#define LAMBDA 0.00125 // Alpha/800
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
@@ -98,15 +98,15 @@ double localEnergy(int** observation, int** result, int val, int i, int j){
 	energy = (val - observation[i][j])*(val - observation[i][j]);
 	energy = energy / TWOSIGMASQUARED;
 	// squared distance
-	// energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
-	// energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
-	// energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
-	// energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
+	energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
 	// absolute distance
-	energy = energy + std::min(LAMBDA*abs(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
-	energy = energy + std::min(LAMBDA*abs(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
-	energy = energy + std::min(LAMBDA*abs(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
-	energy = energy + std::min(LAMBDA*abs(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	// energy = energy + std::min(LAMBDA*abs(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	// energy = energy + std::min(LAMBDA*abs(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
+	// energy = energy + std::min(LAMBDA*abs(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
+	// energy = energy + std::min(LAMBDA*abs(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
 	return energy;
 }
 
@@ -202,7 +202,7 @@ std::istream& operator>>(std::istream& str,CSVRow& data)
 
 // Read data from CSV into matrix
 void readDataInt(int ** data, int numrows, int numcols){
-	std::ifstream file("noisyData.csv");
+	std::ifstream file("noisyData40.csv");
 	CSVRow row;
 	int i=0;
 	while(file >> row && i<numrows)
@@ -218,7 +218,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("restoredData.csv");
+	dataFile.open("restoredData40.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
