@@ -17,11 +17,11 @@
 #include <string>
 
 // hyperparameters
-#define ITERS 1000
+#define ITERS 6000
 #define SIGMA 40
 #define TWOSIGMASQUARED 1600
-#define TEMPCOEFF 1
-#define ALPHA 0.75
+#define TEMPCOEFF 0.1
+#define ALPHA 0.8
 #define LAMBDA 0.00125 // Alpha/800
 
 // image dimensions
@@ -218,7 +218,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("restoredData40_2.csv");
+	dataFile.open("restoredData40_4.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
