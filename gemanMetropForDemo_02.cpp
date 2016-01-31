@@ -25,10 +25,13 @@
 #define TEMPCOEFF 0.3
 
 // cutoff for truncated parabola
-#define ALPHA 7000
+#define ALPHA 3500
 
 // higher lambda = less fidelity to observation data
-#define LAMBDA 2
+#define LAMBDA 1
+
+// diagonal neighbourhood scaling coeff
+#define DIAGSCALE 0.7
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
@@ -85,6 +88,10 @@ double localEnergy(int** observation, int** result, int val, int i, int j){
 	energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
 	energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
 	energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	energy = energy + DIAGSCALE*std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[(i+1)%IMG_WIDTH][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	energy = energy + DIAGSCALE*std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][(j+1)%IMG_LENGTH])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][(j+1)%IMG_LENGTH]), ALPHA);
+	energy = energy + DIAGSCALE*std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
+	energy = energy + DIAGSCALE*std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][(j+1)%IMG_LENGTH])*(val-result[(i+1)%IMG_WIDTH][(j+1)%IMG_LENGTH]), ALPHA);
 	energy = energy / TWOSIGMASQUARED;
 	// absolute distance
 	// energy = energy + std::min(LAMBDA*abs(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
@@ -197,7 +204,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("restoredData40_13.csv");
+	dataFile.open("restoredData40_14.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
