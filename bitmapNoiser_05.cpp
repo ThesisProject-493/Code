@@ -15,7 +15,7 @@
 #define ARRAYDIMX 512
 #define ARRAYDIMY 512
 
-#define SIGMA 40
+#define SIGMA 80
 
 //uses brace initialization, so must use the C++11 compiler. 
 // call as g++ -std=c++11 file-name.pp -o file-handle
@@ -138,7 +138,7 @@ std::istream& operator>>(std::istream& str,CSVRow& data)
 
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("noisyData40.csv");
+	dataFile.open("noisyData80.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";

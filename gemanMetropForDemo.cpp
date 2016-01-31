@@ -20,9 +20,9 @@
 #define ITERS 12000
 #define SIGMA 40
 #define TWOSIGMASQUARED 1600
-#define TEMPCOEFF 1
-#define ALPHA 0.8
-#define LAMBDA 0.00125 // Alpha/800
+#define TEMPCOEFF 0.2
+#define ALPHA 3500
+#define LAMBDA 1
 
 // image dimensions
 // Luckily they are the same. I think I have them confused throughout -G
@@ -67,41 +67,19 @@ void del_MatrixD(double **mat, int row){
 	delete[] mat;
 }
 
-// Does sampling from distributions
-class Sample
-{
-public:
-	Sample():
-	mt(std::random_device()()),
-	G(0,SIGMA)
-	{}
-	int draw_bern(double);
-	double draw_gauss();
-private:
-  	std::mt19937 mt;
-	std::normal_distribution<double> G;
-}; //add constructor and destructor
-
-// returns zero mean gaussian of variance SIGMA
-double Sample::draw_gauss(){
-	return G(mt);
-}
-
-// returns 1 with prob param
-int Sample::draw_bern(double param){
-	std::discrete_distribution<int> B {1-param, param};
-	return B(mt);
-}
-
 double localEnergy(int** observation, int** result, int val, int i, int j){
 	double energy;
 	energy = (val - observation[i][j])*(val - observation[i][j]);
-	energy = energy / TWOSIGMASQUARED;
-	// squared distance
+	// energy = energy + (val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]);
+	// energy = energy + (val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]);
+	// energy = energy + (val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]);
+	// energy = energy + (val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]);
+	// min(squared distance,alpha)
 	energy = energy + std::min(LAMBDA*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH])*(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
 	energy = energy + std::min(LAMBDA*(val-result[i][(j+1)%IMG_LENGTH])*(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
 	energy = energy + std::min(LAMBDA*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j])*(val-result[(i-1+IMG_WIDTH)%IMG_WIDTH][j]), ALPHA);
 	energy = energy + std::min(LAMBDA*(val-result[(i+1)%IMG_WIDTH][j])*(val-result[(i+1)%IMG_WIDTH][j]), ALPHA);
+	energy = energy / TWOSIGMASQUARED;
 	// absolute distance
 	// energy = energy + std::min(LAMBDA*abs(val-result[i][(j-1+IMG_LENGTH)%IMG_LENGTH]), ALPHA);
 	// energy = energy + std::min(LAMBDA*abs(val-result[i][(j+1)%IMG_LENGTH]), ALPHA);
@@ -113,20 +91,17 @@ double localEnergy(int** observation, int** result, int val, int i, int j){
 void metSamp(int** observation, int** result){
 	// define variables
 	int i, j, k, val;
-	double proposedEnergy, currentEnergy;
+	double proposedEnergy, currentEnergy, param;
 
 	// vector for randomly visitng sites
 	std::vector<int> indices;
 	for (k=0; k<IMG_WIDTH*IMG_LENGTH; k++){
 		indices.push_back(k);
 	}
-	// machinery for permuting vector
+	// machinery for randomness
 	std::random_device random_dev;
 	std::mt19937       generator(random_dev());
-
-	// instantiate sampler
-	Sample sampler;
-
+	std::uniform_int_distribution<> dis(0, 255);
 
 	for(int sweep=2; sweep<ITERS; sweep++){
 		// permute indices
@@ -138,11 +113,7 @@ void metSamp(int** observation, int** result){
 			i = (indices[k] - j) / IMG_WIDTH;
 
 			// pick a proposal
-			val = result[i][j] + (int) sampler.draw_gauss();
-			if(val<0)
-				val = 0;
-			else if(val>255)
-				val = 255;
+			val = dis(generator);
 
 			// calculate energies
 			currentEnergy = localEnergy(observation, result, result[i][j], i, j);
@@ -153,9 +124,11 @@ void metSamp(int** observation, int** result){
 				// keep new pixel value
 				result[i][j] = val;
 			}
-			else if(sampler.draw_bern(exp(-log(sweep)*TEMPCOEFF*(proposedEnergy-currentEnergy)))){
-				// keep new pixel value
-				result[i][j] = val;
+			else{
+				param = exp(-log(sweep)*TEMPCOEFF*(proposedEnergy-currentEnergy));
+				std::discrete_distribution<int> B {1-param, param};
+			 	if(B(generator))
+					result[i][j] = val;
 			}
 		}
 	}
@@ -218,7 +191,7 @@ void readDataInt(int ** data, int numrows, int numcols){
 // write matrix into a CSV
 void writeDataInt(int ** data, int row, int col){
 	std::ofstream dataFile;
-	dataFile.open("restoredData40_5.csv");
+	dataFile.open("restoredData40_12.csv");
 	for (int i=0; i<row; i++){
 		for (int j=0; j<col-1; j++){
 			dataFile<<data[i][j]<<",";
